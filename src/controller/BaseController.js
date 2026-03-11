@@ -1,13 +1,15 @@
-const formatResponse = require('../utils/formatResponse');
-const logger         = require('../config/logger');
+const logger = require('../config/logger');
 
 /**
  * BaseController — todos os controllers herdam desta classe.
  * Fornece handleSuccess e handleError padronizados.
+ *
+ * Os controllers novos (singleton, arrow functions) usam formatResponse diretamente.
+ * Os controllers legados (instanciados com DI) usam estes métodos de instância.
  */
 class BaseController {
   handleSuccess(res, data, message = 'OK', statusCode = 200) {
-    return res.status(statusCode).json(formatResponse.success(data, message));
+    return res.status(statusCode).json({ success: true, message, data });
   }
 
   handleError(error, res, context = '') {
@@ -22,7 +24,7 @@ class BaseController {
         ? 'Erro interno do servidor'
         : error.message;
 
-    return res.status(statusCode).json(formatResponse.error(message));
+    return res.status(statusCode).json({ success: false, message, code: error.code || 'INTERNAL_ERROR' });
   }
 }
 

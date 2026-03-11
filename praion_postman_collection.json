@@ -1,20 +1,16 @@
 {
   "info": {
-    "name": "PraiOn API",
-    "description": "Collection de rotas da API PraiOn.",
+    "name": "PraiOn API — v2",
+    "description": "Collection completa de rotas da API PraiOn (inclui Cardápio Admin, Mesas, Pedidos, Upload e Socket.io events).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000/api",
-      "type": "string"
-    },
-    {
-      "key": "token",
-      "value": "",
-      "type": "string"
-    }
+    { "key": "baseUrl",    "value": "http://localhost:3000/api", "type": "string" },
+    { "key": "token",      "value": "",                           "type": "string" },
+    { "key": "categoriaId","value": "1",                          "type": "string" },
+    { "key": "itemId",     "value": "1",                          "type": "string" },
+    { "key": "mesaId",     "value": "1",                          "type": "string" },
+    { "key": "pedidoId",   "value": "1",                          "type": "string" }
   ],
   "item": [
     {
@@ -28,91 +24,178 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Usuario Teste\",\n  \"email\": \"usuario@praion.com\",\n  \"senha\": \"Senha@123\",\n  \"telefone\": \"11999999999\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
-            }
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth","register"] }
           }
         },
         {
           "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData && jsonData.data && jsonData.data.token) {",
-                  "    pm.collectionVariables.set(\"token\", jsonData.data.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var d = pm.response.json();",
+                "if (d && d.data && d.data.token) pm.collectionVariables.set('token', d.data.token);"
+              ],
+              "type": "text/javascript"
             }
-          ],
+          }],
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"admin@praion.com\",\n  \"senha\": \"Admin@123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
-            }
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] }
           }
         },
         {
           "name": "Me",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "me"]
-            }
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth","me"] }
           }
         }
       ]
     },
     {
-      "name": "Cardápio",
+      "name": "Cardápio (Público)",
       "item": [
         {
           "name": "Listar Cardápio",
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/cardapio",
-              "host": ["{{baseUrl}}"],
-              "path": ["cardapio"]
-            }
+            "url": { "raw": "{{baseUrl}}/cardapio", "host": ["{{baseUrl}}"], "path": ["cardapio"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categorias (Admin)",
+      "item": [
+        {
+          "name": "Listar Categorias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/categorias", "host": ["{{baseUrl}}"], "path": ["categorias"] }
+          }
+        },
+        {
+          "name": "Criar Categoria",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Sobremesas\",\n  \"ativo\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/categorias", "host": ["{{baseUrl}}"], "path": ["categorias"] }
+          }
+        },
+        {
+          "name": "Editar Categoria",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Doces e Sobremesas\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/categorias/{{categoriaId}}", "host": ["{{baseUrl}}"], "path": ["categorias","{{categoriaId}}"] }
+          }
+        },
+        {
+          "name": "Remover Categoria",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/categorias/{{categoriaId}}", "host": ["{{baseUrl}}"], "path": ["categorias","{{categoriaId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Itens do Cardápio (Admin)",
+      "item": [
+        {
+          "name": "Criar Item em Categoria",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Pudim de Leite\",\n  \"descricao\": \"Receita caseira com calda de caramelo\",\n  \"preco\": 15.00,\n  \"disponivel\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/categorias/{{categoriaId}}/itens", "host": ["{{baseUrl}}"], "path": ["categorias","{{categoriaId}}","itens"] }
+          }
+        },
+        {
+          "name": "Editar Item",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Pudim de Leite Condensado\",\n  \"preco\": 17.50\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/itens/{{itemId}}", "host": ["{{baseUrl}}"], "path": ["itens","{{itemId}}"] }
+          }
+        },
+        {
+          "name": "Remover Item",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/itens/{{itemId}}", "host": ["{{baseUrl}}"], "path": ["itens","{{itemId}}"] }
+          }
+        },
+        {
+          "name": "Alterar Disponibilidade",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"disponivel\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/itens/{{itemId}}/disponibilidade", "host": ["{{baseUrl}}"], "path": ["itens","{{itemId}}","disponibilidade"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Upload de Mídia",
+      "item": [
+        {
+          "name": "Upload de Imagem",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "" }]
+            },
+            "url": { "raw": "{{baseUrl}}/upload", "host": ["{{baseUrl}}"], "path": ["upload"] }
           }
         }
       ]
@@ -121,37 +204,59 @@
       "name": "Mesas",
       "item": [
         {
+          "name": "Listar Mesas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/mesas", "host": ["{{baseUrl}}"], "path": ["mesas"] }
+          }
+        },
+        {
+          "name": "Criar Mesa",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": 10,\n  \"capacidade\": 4\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/mesas", "host": ["{{baseUrl}}"], "path": ["mesas"] }
+          }
+        },
+        {
+          "name": "Remover Mesa",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/mesas/{{mesaId}}", "host": ["{{baseUrl}}"], "path": ["mesas","{{mesaId}}"] }
+          }
+        },
+        {
           "name": "Chamar Garçom",
           "request": {
             "method": "POST",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/mesas/1/chamar-garcom",
-              "host": ["{{baseUrl}}"],
-              "path": ["mesas", "1", "chamar-garcom"]
-            }
+            "url": { "raw": "{{baseUrl}}/mesas/{{mesaId}}/chamar-garcom", "host": ["{{baseUrl}}"], "path": ["mesas","{{mesaId}}","chamar-garcom"] }
           }
         },
         {
           "name": "Pedidos da Mesa",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/mesas/1/pedidos",
-              "host": ["{{baseUrl}}"],
-              "path": ["mesas", "1", "pedidos"]
-            }
+            "url": { "raw": "{{baseUrl}}/mesas/{{mesaId}}/pedidos", "host": ["{{baseUrl}}"], "path": ["mesas","{{mesaId}}","pedidos"] }
+          }
+        },
+        {
+          "name": "Fechar Conta",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/mesas/{{mesaId}}/fechar-conta", "host": ["{{baseUrl}}"], "path": ["mesas","{{mesaId}}","fechar-conta"] }
           }
         }
       ]
@@ -162,23 +267,10 @@
         {
           "name": "Listar Todos (Admin)",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/pedidos",
-              "host": ["{{baseUrl}}"],
-              "path": ["pedidos"]
-            }
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] }
           }
         },
         {
@@ -188,49 +280,24 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"mesaId\": 1,\n  \"total\": 106.83,\n  \"itens\": [\n    {\n      \"id\": 1,\n      \"nome\": \"Porção de Camarão\",\n      \"quantidade\": 1,\n      \"preco\": 85.00\n    },\n    {\n      \"id\": 2,\n      \"nome\": \"Cerveja Artesanal\",\n      \"quantidade\": 1,\n      \"preco\": 21.83\n    }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"mesaId\": 1,\n  \"total\": 106.83,\n  \"itens\": [\n    { \"id\": 1, \"nome\": \"Camarão Frito\", \"quantidade\": 1, \"preco\": 85.00 },\n    { \"id\": 2, \"nome\": \"Cerveja\",        \"quantidade\": 1, \"preco\": 21.83 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
             },
-            "url": {
-              "raw": "{{baseUrl}}/pedidos",
-              "host": ["{{baseUrl}}"],
-              "path": ["pedidos"]
-            }
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] }
           }
         },
         {
           "name": "Atualizar Status",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"preparando\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "url": {
-              "raw": "{{baseUrl}}/pedidos/1/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["pedidos", "1", "status"]
-            }
+            "url": { "raw": "{{baseUrl}}/pedidos/{{pedidoId}}/status", "host": ["{{baseUrl}}"], "path": ["pedidos","{{pedidoId}}","status"] }
           }
         }
       ]
@@ -243,11 +310,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
-            }
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
           }
         }
       ]

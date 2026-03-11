@@ -25,8 +25,10 @@ class PedidoService {
 
   /**
    * Cria pedido com itens em transaction.
+   * @param {object}  dados
+   * @param {import('socket.io').Server|null} io  - instância Socket.io (opcional)
    */
-  async criarPedido({ mesaId, itens, total, observacao }) {
+  async criarPedido({ mesaId, itens, total, observacao }, io = null) {
     const mesa = await this.Mesa.findByPk(mesaId);
     if (!mesa) throw new AppError('Mesa não encontrada', 404);
 
@@ -55,12 +57,22 @@ class PedidoService {
 
       logger.info(`Pedido criado: #${pedido.id} — Mesa ${mesa.numero} — R$ ${total}`);
 
-      return this.Pedido.findByPk(pedido.id, {
+      const pedidoCompleto = await this.Pedido.findByPk(pedido.id, {
         include: [
           { model: this.Mesa,       as: 'mesa',  attributes: ['id', 'numero'] },
           { model: this.PedidoItem, as: 'itens' },
         ],
       });
+
+      /* Emite evento em tempo real para o painel admin */
+      if (io) {
+        io.emit('novo_pedido', {
+          pedido: pedidoCompleto,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      return pedidoCompleto;
     } catch (err) {
       await t.rollback();
       throw err;
