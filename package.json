@@ -1,0 +1,56 @@
+{
+  "name": "praion-backend",
+  "version": "1.0.0",
+  "description": "PraiOn - Sistema de atendimento digital para restaurantes e bares de praia",
+  "main": "src/entrypoint/server.js",
+  "scripts": {
+    "start": "node src/entrypoint/server.js",
+    "dev": "nodemon src/entrypoint/server.js",
+    "migrate": "sequelize-cli db:migrate",
+    "migrate:undo": "sequelize-cli db:migrate:undo:all",
+    "seed": "sequelize-cli db:seed:all",
+    "seed:undo": "sequelize-cli db:seed:undo:all",
+    "db:reset": "npm run migrate:undo && npm run migrate && npm run seed",
+    "test": "NODE_ENV=test jest --runInBand --forceExit",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage --forceExit"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "helmet": "^7.1.0",
+    "joi": "^17.13.1",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "node-cron": "^3.0.3",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "pg": "^8.12.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.13.0",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.4",
+    "sequelize-cli": "^6.6.2",
+    "supertest": "^7.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/**/*.test.js"],
+    "setupFilesAfterFramework": ["./tests/setup.js"],
+    "verbose": true
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "PraiOn",
+  "license": "MIT"
+}

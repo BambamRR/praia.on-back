@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: praion_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${DB_USER:-praion}
+      POSTGRES_PASSWORD: ${DB_PASS:-praion123}
+      POSTGRES_DB:       ${DB_NAME:-praion_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-praion} -d ${DB_NAME:-praion_db}"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: praion_api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT:     ${PORT:-3000}
+      DB_HOST:  postgres
+      DB_PORT:  5432
+      DB_USER:  ${DB_USER:-praion}
+      DB_PASS:  ${DB_PASS:-praion123}
+      DB_NAME:  ${DB_NAME:-praion_db}
+      JWT_SECRET:    ${JWT_SECRET:-changeme_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+
+volumes:
+  postgres_data:
