@@ -1,28 +1,27 @@
 /**
- * Formata respostas HTTP padronizadas.
+ * Utilitários de resposta HTTP padronizados.
+ *
+ * Assinatura: formatResponse.success(res, data, statusCode?)
+ *             formatResponse.error(res, message, statusCode?, code?)
+ *             formatResponse.paginated(res, data, total, page, limit)
  */
 
-const success = (data, message = 'OK') => ({
-  success: true,
-  message,
-  data,
-});
+const success = (res, data, statusCode = 200) =>
+  res.status(statusCode).json({ success: true, data });
 
-const error = (message = 'Erro interno', code = 'INTERNAL_ERROR') => ({
-  success: false,
-  message,
-  code,
-});
+const error = (res, message = 'Erro interno', statusCode = 500, code = 'INTERNAL_ERROR') =>
+  res.status(statusCode).json({ success: false, message, code });
 
-const paginated = (data, total, page, limit) => ({
-  success: true,
-  data,
-  pagination: {
-    total,
-    page,
-    limit,
-    pages: Math.ceil(total / limit),
-  },
-});
+const paginated = (res, data, total, page, limit) =>
+  res.status(200).json({
+    success: true,
+    data,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    },
+  });
 
 module.exports = { success, error, paginated };

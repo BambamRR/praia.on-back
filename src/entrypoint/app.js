@@ -39,6 +39,10 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'PraiOn API Docs',
 }));
 
+/* ── Arquivos estáticos (uploads de imagens) ─────────────────────────── */
+const path = require('path');
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 /* ── Rotas ─────────────────────────────────────────────────────────── */
 app.use('/api', routes);
 
