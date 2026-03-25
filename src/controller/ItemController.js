@@ -1,7 +1,7 @@
 const BaseController       = require('./BaseController');
 const ItemService          = require('../service/ItemService');
 const asyncErrorWrapper    = require('../utils/asyncErrorWrapper');
-const { formatResponse }   = require('../utils/formatResponse');
+const formatResponse       = require('../utils/formatResponse');
 const models               = require('../models');
 
 const itemService = new ItemService(models);

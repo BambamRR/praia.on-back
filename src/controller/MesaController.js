@@ -1,7 +1,7 @@
 const BaseController       = require('./BaseController');
 const MesaService          = require('../service/MesaService');
 const asyncErrorWrapper    = require('../utils/asyncErrorWrapper');
-const { formatResponse }   = require('../utils/formatResponse');
+const formatResponse       = require('../utils/formatResponse');
 const models               = require('../models');
 const { getIO }            = require('../config/socket');
 

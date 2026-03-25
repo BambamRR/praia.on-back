@@ -16,6 +16,7 @@ class BaseController {
     logger.error(`[${this.constructor.name}${context ? `.${context}` : ''}] ${error.message}`, {
       stack: error.stack,
     });
+    console.error(`[${this.constructor.name}${context ? `.${context}` : ''}]`, error);
 
     const statusCode = error.isOperational ? error.statusCode : 500;
     const message    = error.isOperational

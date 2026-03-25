@@ -1,7 +1,7 @@
 const BaseController       = require('./BaseController');
 const CategoriaService     = require('../service/CategoriaService');
 const asyncErrorWrapper    = require('../utils/asyncErrorWrapper');
-const { formatResponse }   = require('../utils/formatResponse');
+const formatResponse       = require('../utils/formatResponse');
 const models               = require('../models');
 
 const categoriaService = new CategoriaService(models);

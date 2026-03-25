@@ -1,7 +1,7 @@
 const path             = require('path');
 const BaseController   = require('./BaseController');
 const asyncErrorWrapper = require('../utils/asyncErrorWrapper');
-const { formatResponse } = require('../utils/formatResponse');
+const formatResponse = require('../utils/formatResponse');
 const { upload }       = require('../config/multer');
 const AppError         = require('../utils/AppError');
 

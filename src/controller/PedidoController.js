@@ -12,7 +12,7 @@ class PedidoController extends BaseController {
   async listarPedidos(req, res) {
     try {
       const pedidos = await this.pedidoService.listarPedidos();
-      return this.handleSuccess(res, pedidos);
+      return this.handleSuccess(res, { pedidos });
     } catch (error) {
       return this.handleError(error, res, 'listarPedidos');
     }

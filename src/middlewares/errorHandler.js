@@ -41,6 +41,7 @@ const errorHandler = (err, req, res, next) => { // eslint-disable-line no-unused
     path:    req.path,
     method:  req.method,
   });
+  console.error('[errorHandler] Erro interno inesperado:', err);
 
   return res.status(500).json({
     success: false,
