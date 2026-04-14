@@ -6,3 +6,7 @@ coverage/
 logs/
 .DS_Store
 Thumbs.db
+
+# Uploads: ignora arquivos enviados, mas mantém a pasta no git
+uploads/*
+!uploads/.gitkeep

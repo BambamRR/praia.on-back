@@ -1,8 +1,14 @@
 const path   = require('path');
+const fs     = require('fs');
 const multer = require('multer');
 const AppError = require('../utils/AppError');
 
 const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+
+/* Garante que a pasta de uploads exista antes de qualquer requisição */
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 const MAX_SIZE_MB  = 5;
 
 /* Armazena em disco local — troque por S3/R2 em produção */

@@ -15,6 +15,18 @@ const { generalLimiter } = require('../middlewares/rateLimiter');
 
 const app = express();
 
+/* ── Trust proxy (Nginx / reverse proxy) ─────────────────────────────── */
+app.set('trust proxy', 1);
+
+/* ── Arquivos estáticos (uploads de imagens) ─────────────────────────── */
+/* ANTES do helmet para evitar que o CSP bloqueie as imagens */
+const path = require('path');
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+  maxAge:       '1d',
+  etag:         true,
+  lastModified: true,
+}));
+
 /* ── Segurança ─────────────────────────────────────────────────────── */
 app.use(helmet());
 app.use(cors({
@@ -38,10 +50,6 @@ app.use(passport.initialize());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'PraiOn API Docs',
 }));
-
-/* ── Arquivos estáticos (uploads de imagens) ─────────────────────────── */
-const path = require('path');
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 /* ── Rotas ─────────────────────────────────────────────────────────── */
 app.use('/api', routes);
