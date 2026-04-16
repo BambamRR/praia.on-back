@@ -29,8 +29,22 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
 
 /* ── Segurança ─────────────────────────────────────────────────────── */
 app.use(helmet());
+
+const corsOrigin = process.env.CORS_ORIGIN || '*';
+const allowedOrigins = corsOrigin.includes(',') 
+  ? corsOrigin.split(',').map(o => o.trim()) 
+  : [corsOrigin];
+
 app.use(cors({
-  origin:      process.env.CORS_ORIGIN || '*',
+  origin: function (origin, callback) {
+    // Permitir requisições sem origin (como mobile apps ou curl) ou se estiver na lista
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Origem bloqueada: ${origin}`);
+      callback(new Error('Não permitido por CORS'));
+    }
+  },
   credentials: true,
 }));
 app.use(generalLimiter);

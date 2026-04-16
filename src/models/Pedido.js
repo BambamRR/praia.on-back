@@ -2,7 +2,7 @@
 
 const { DataTypes } = require('sequelize');
 
-const STATUS_VALIDOS = ['novo', 'preparando', 'pronto', 'entregue', 'cancelado'];
+const STATUS_VALIDOS = ['novo', 'preparando', 'pronto', 'entregue', 'cancelado', 'finalizado'];
 
 module.exports = (sequelize) => {
   const Pedido = sequelize.define('Pedido', {

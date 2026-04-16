@@ -52,6 +52,12 @@ class MesaController extends BaseController {
     const resumo = await getService().fecharConta(req.params.mesaId, io);
     return formatResponse.success(res, resumo);
   });
+
+  /** POST /api/mesas/:mesaId/finalizar-conta — liberar mesa (admin) */
+  finalizarConta = asyncErrorWrapper(async (req, res) => {
+    const result = await getService().finalizarConta(req.params.mesaId);
+    return formatResponse.success(res, result);
+  });
 }
 
 module.exports = new MesaController();

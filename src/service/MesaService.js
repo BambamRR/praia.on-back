@@ -128,6 +128,9 @@ class MesaService {
       timestamp:   new Date().toISOString(),
     };
 
+    /* Muda status da mesa para 'aguardando' (sinalizando fechamento solicitado) */
+    await mesa.update({ status: 'aguardando' });
+
     logger.info(`💳 Fechar conta solicitado — Mesa ${mesa.numero} — Total: R$ ${totalGeral}`);
 
     if (io) {
@@ -135,6 +138,41 @@ class MesaService {
     }
 
     return resumo;
+  }
+
+  /**
+   * Finaliza oficialmente a conta da mesa (após pagamento confirmado pelo admin).
+   * Define o status da mesa como 'livre' novamente.
+   */
+  async finalizarConta(mesaId) {
+    const mesa = await this.Mesa.findByPk(mesaId);
+    if (!mesa) throw new AppError('Mesa não encontrada', 404);
+
+    const t = await this.sequelize.transaction();
+    try {
+      // Marca todos os pedidos ativos da mesa como 'finalizado'
+      // Excluímos 'cancelado' para manter o histórico de cancelamentos
+      await this.Pedido.update(
+        { status: 'finalizado' },
+        { 
+          where: { 
+            mesa_id: mesaId, 
+            status: ['novo', 'preparando', 'pronto', 'entregue'] 
+          },
+          transaction: t
+        }
+      );
+
+      await mesa.update({ status: 'livre' }, { transaction: t });
+
+      await t.commit();
+      logger.info(`✅ Conta finalizada, pedidos arquivados e mesa liberada: Mesa ${mesa.numero} (ID: ${mesaId})`);
+
+      return { success: true, message: 'Conta finalizada e mesa liberada com sucesso' };
+    } catch (err) {
+      await t.rollback();
+      throw err;
+    }
   }
 }
 

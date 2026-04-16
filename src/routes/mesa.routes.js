@@ -63,4 +63,14 @@ router.get('/:mesaId/pedidos', auth, ctrl.getPedidosByMesa);
  */
 router.post('/:mesaId/fechar-conta', ctrl.fecharConta);
 
+/**
+ * @openapi
+ * /mesas/{mesaId}/finalizar-conta:
+ *   post:
+ *     tags: [Mesas]
+ *     summary: Finaliza a conta e libera a mesa (admin)
+ *     security: [{ bearerAuth: [] }]
+ */
+router.post('/:mesaId/finalizar-conta', auth, ctrl.finalizarConta);
+
 module.exports = router;
