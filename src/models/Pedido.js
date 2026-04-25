@@ -34,6 +34,10 @@ module.exports = (sequelize) => {
       type:      DataTypes.TEXT,
       allowNull: true,
     },
+    metodo_pagamento: {
+      type:      DataTypes.STRING,
+      allowNull: true,
+    },
   }, {
     tableName:  'pedidos',
     timestamps: true,

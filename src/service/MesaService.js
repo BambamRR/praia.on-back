@@ -144,7 +144,7 @@ class MesaService {
    * Finaliza oficialmente a conta da mesa (após pagamento confirmado pelo admin).
    * Define o status da mesa como 'livre' novamente.
    */
-  async finalizarConta(mesaId) {
+  async finalizarConta(mesaId, metodoPagamento = null) {
     const mesa = await this.Mesa.findByPk(mesaId);
     if (!mesa) throw new AppError('Mesa não encontrada', 404);
 
@@ -153,7 +153,7 @@ class MesaService {
       // Marca todos os pedidos ativos da mesa como 'finalizado'
       // Excluímos 'cancelado' para manter o histórico de cancelamentos
       await this.Pedido.update(
-        { status: 'finalizado' },
+        { status: 'finalizado', metodo_pagamento: metodoPagamento },
         { 
           where: { 
             mesa_id: mesaId, 
