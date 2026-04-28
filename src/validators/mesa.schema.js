@@ -6,6 +6,7 @@ const criarMesaSchema = Joi.object({
     'any.required':    'Número da mesa é obrigatório',
   }),
   capacidade: Joi.number().integer().positive().max(30).default(4),
+  estabelecimento_id: Joi.number().integer().positive(),
 });
 
 module.exports = { criarMesaSchema };

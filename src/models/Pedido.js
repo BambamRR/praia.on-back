@@ -38,6 +38,10 @@ module.exports = (sequelize) => {
       type:      DataTypes.STRING,
       allowNull: true,
     },
+    sessao_id: {
+      type:      DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     tableName:  'pedidos',
     timestamps: true,
@@ -49,6 +53,10 @@ module.exports = (sequelize) => {
     Pedido.belongsTo(models.Mesa, {
       foreignKey: 'mesa_id',
       as:         'mesa',
+    });
+    Pedido.belongsTo(models.SessaoMesa, {
+      foreignKey: 'sessao_id',
+      as:         'sessao',
     });
     Pedido.hasMany(models.PedidoItem, {
       foreignKey: 'pedido_id',

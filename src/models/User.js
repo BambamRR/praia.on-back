@@ -45,6 +45,10 @@ module.exports = (sequelize) => {
       type:      DataTypes.INTEGER,
       allowNull: false,
     },
+    estabelecimento_id: {
+      type:      DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     tableName:  'users',
     timestamps: true,
@@ -60,6 +64,10 @@ module.exports = (sequelize) => {
     User.belongsTo(models.Perfil, {
       foreignKey: 'perfil_id',
       as:         'perfil',
+    });
+    User.belongsTo(models.Estabelecimento, {
+      foreignKey: 'estabelecimento_id',
+      as:         'estabelecimento',
     });
   };
 

@@ -11,17 +11,24 @@ module.exports = {
 
     const senhaHash = await bcrypt.hash('Admin@123', 12);
 
-    await queryInterface.bulkInsert('users', [
-      {
-        nome:      'Administrador PraiOn',
-        email:     'admin@praion.com',
-        senha:     senhaHash,
-        telefone:  '11999999999',
-        perfil_id: perfil.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]);
+    const [existe] = await queryInterface.sequelize.query(
+      `SELECT id FROM users WHERE email = 'admin@praion.com' LIMIT 1`,
+      { type: queryInterface.sequelize.QueryTypes.SELECT }
+    );
+
+    if (!existe) {
+      await queryInterface.bulkInsert('users', [
+        {
+          nome:      'Administrador PraiOn',
+          email:     'admin@praion.com',
+          senha:     senhaHash,
+          telefone:  '11999999999',
+          perfil_id: perfil.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]);
+    }
   },
 
   async down(queryInterface) {

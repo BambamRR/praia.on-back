@@ -15,20 +15,50 @@ class MesaController extends BaseController {
 
   /** GET /api/mesas — lista todas */
   listar = asyncErrorWrapper(async (req, res) => {
-    const mesas = await getService().listar();
+    // Se não for super admin, filtra pelo estabelecimento do usuário
+    const estId = req.user.perfil?.nome === 'administrador' && !req.user.estabelecimento_id 
+      ? null // Super Admin
+      : req.user.estabelecimento_id;
+
+    const mesas = await getService().listar(estId);
     return formatResponse.success(res, { mesas });
   });
 
   /** POST /api/mesas — criar nova mesa */
   criar = asyncErrorWrapper(async (req, res) => {
-    const mesa = await getService().criar(req.body);
+    const { numero, capacidade, estabelecimento_id } = req.body;
+    
+    // Prioridade:
+    // 1. Se o usuário logado tiver estabelecimento_id (Admin Local), usamos o dele.
+    // 2. Se não (Super Admin), usamos o enviado no corpo da requisição.
+    const finalEstId = req.user.estabelecimento_id || estabelecimento_id;
+
+    if (!finalEstId) {
+      console.error('[MesaController] Tentativa de criar mesa sem estabelecimento_id', {
+        user: req.user.id,
+        body: req.body
+      });
+    }
+
+    const mesa = await getService().criar({ 
+      numero, 
+      capacidade, 
+      estabelecimento_id: finalEstId 
+    });
     return formatResponse.success(res, mesa, 201);
   });
 
   /** DELETE /api/mesas/:id — remover mesa */
   remover = asyncErrorWrapper(async (req, res) => {
-    const result = await getService().remover(req.params.id);
+    const estId = req.user.estabelecimento_id;
+    const result = await getService().remover(req.params.id, estId);
     return formatResponse.success(res, result);
+  });
+
+  /** POST /api/mesas/:mesaId/abrir-sessao */
+  abrirSessao = asyncErrorWrapper(async (req, res) => {
+    const sessao = await getService().abrirSessao(req.params.mesaId);
+    return formatResponse.success(res, sessao);
   });
 
   /** POST /api/mesas/:mesaId/chamar-garcom */

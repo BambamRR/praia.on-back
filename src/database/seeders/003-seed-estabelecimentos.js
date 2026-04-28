@@ -1,0 +1,77 @@
+'use strict';
+
+const bcrypt = require('bcryptjs');
+
+module.exports = {
+  async up(queryInterface) {
+    const [perfil] = await queryInterface.sequelize.query(
+      `SELECT id FROM perfis WHERE nome = 'administrador' LIMIT 1`,
+      { type: queryInterface.sequelize.QueryTypes.SELECT }
+    );
+
+    const senhaHash = await bcrypt.hash('Admin@123', 12);
+
+    // 1. Inserir Estabelecimentos
+    const estabelecimentosParaInserir = [
+      { nome: 'Barraca do Zé', tipo: 'bar_praia', cidade: 'Fortaleza', estado: 'CE' },
+      { nome: 'Quiosque Beira-Mar', tipo: 'quiosque', cidade: 'Fortaleza', estado: 'CE' },
+      { nome: 'Restaurante Areia Dourada', tipo: 'restaurante', cidade: 'Fortaleza', estado: 'CE' }
+    ];
+
+    for (const est of estabelecimentosParaInserir) {
+      const [existe] = await queryInterface.sequelize.query(
+        `SELECT id FROM estabelecimentos WHERE nome = '${est.nome}' LIMIT 1`,
+        { type: queryInterface.sequelize.QueryTypes.SELECT }
+      );
+
+      if (!existe) {
+        await queryInterface.bulkInsert('estabelecimentos', [
+          { ...est, createdAt: new Date(), updatedAt: new Date() }
+        ]);
+      }
+    }
+
+    // Pegar os IDs gerados
+    const ests = await queryInterface.sequelize.query(
+      `SELECT id, nome FROM estabelecimentos WHERE nome IN ('Barraca do Zé', 'Quiosque Beira-Mar', 'Restaurante Areia Dourada')`,
+      { type: queryInterface.sequelize.QueryTypes.SELECT }
+    );
+
+    const getEstId = (nome) => ests.find(e => e.nome === nome)?.id;
+
+    // 2. Inserir Admins para cada estabelecimento
+    const adminsParaInserir = [
+      { nome: 'Admin Zé', email: 'ze@praion.com', est: 'Barraca do Zé' },
+      { nome: 'Admin Quiosque', email: 'quiosque@praion.com', est: 'Quiosque Beira-Mar' },
+      { nome: 'Admin Restaurante', email: 'restaurante@praion.com', est: 'Restaurante Areia Dourada' }
+    ];
+
+    for (const admin of adminsParaInserir) {
+      const [existe] = await queryInterface.sequelize.query(
+        `SELECT id FROM users WHERE email = '${admin.email}' LIMIT 1`,
+        { type: queryInterface.sequelize.QueryTypes.SELECT }
+      );
+
+      if (!existe) {
+        await queryInterface.bulkInsert('users', [
+          {
+            nome: admin.nome,
+            email: admin.email,
+            senha: senhaHash,
+            perfil_id: perfil.id,
+            estabelecimento_id: getEstId(admin.est),
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        ]);
+      }
+    }
+  },
+
+  async down(queryInterface) {
+    await queryInterface.bulkDelete('users', {
+      email: ['ze@praion.com', 'quiosque@praion.com', 'restaurante@praion.com']
+    }, {});
+    await queryInterface.bulkDelete('estabelecimentos', null, {});
+  },
+};

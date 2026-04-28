@@ -30,6 +30,10 @@ module.exports = (sequelize) => {
       defaultValue: 4,
       validate:     { min: 1 },
     },
+    estabelecimento_id: {
+      type:      DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     tableName:  'mesas',
     timestamps: true,
@@ -39,6 +43,10 @@ module.exports = (sequelize) => {
     Mesa.hasMany(models.Pedido, {
       foreignKey: 'mesa_id',
       as:         'pedidos',
+    });
+    Mesa.belongsTo(models.Estabelecimento, {
+      foreignKey: 'estabelecimento_id',
+      as:         'estabelecimento',
     });
   };
 

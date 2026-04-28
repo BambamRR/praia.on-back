@@ -3,20 +3,30 @@ const logger       = require('../config/logger');
 
 class PedidoService {
   constructor(models) {
-    this.Pedido     = models.Pedido;
-    this.PedidoItem = models.PedidoItem;
-    this.Mesa       = models.Mesa;
-    this.Produto    = models.Produto;
-    this.sequelize  = models.sequelize;
+    this.Pedido      = models.Pedido;
+    this.PedidoItem  = models.PedidoItem;
+    this.Mesa        = models.Mesa;
+    this.Produto     = models.Produto;
+    this.SessaoMesa  = models.SessaoMesa;
+    this.sequelize   = models.sequelize;
   }
 
   /**
    * Lista todos os pedidos (admin).
+   * Se estabelecimento_id for informado, filtra os pedidos das mesas daquele local.
    */
-  async listarPedidos() {
+  async listarPedidos(estabelecimento_id = null) {
+    const whereMesa = {};
+    if (estabelecimento_id) whereMesa.estabelecimento_id = estabelecimento_id;
+
     return this.Pedido.findAll({
       include: [
-        { model: this.Mesa,       as: 'mesa',  attributes: ['id', 'numero'] },
+        { 
+          model: this.Mesa, 
+          as: 'mesa', 
+          attributes: ['id', 'numero', 'estabelecimento_id'],
+          where: whereMesa 
+        },
         { model: this.PedidoItem, as: 'itens' },
       ],
       order: [['createdAt', 'DESC']],
@@ -25,8 +35,7 @@ class PedidoService {
 
   /**
    * Cria pedido com itens em transaction.
-   * @param {object}  dados
-   * @param {import('socket.io').Server|null} io  - instância Socket.io (opcional)
+   * Agora vincula o pedido obrigatoriamente a uma SessaoMesa ativa.
    */
   async criarPedido({ mesaId, itens, total, observacao }, io = null) {
     const mesa = await this.Mesa.findByPk(mesaId);
@@ -34,8 +43,29 @@ class PedidoService {
 
     const t = await this.sequelize.transaction();
     try {
+      // 1. Buscar ou Criar Sessão Ativa
+      let sessao = await this.SessaoMesa.findOne({
+        where: { mesa_id: mesaId, status: 'aberta' },
+        transaction: t
+      });
+
+      if (!sessao) {
+        sessao = await this.SessaoMesa.create({
+          mesa_id: mesaId,
+          status: 'aberta',
+          aberto_em: new Date()
+        }, { transaction: t });
+      }
+
+      // 2. Criar o Pedido vinculado à sessão
       const pedido = await this.Pedido.create(
-        { mesa_id: mesaId, total, observacao, status: 'novo' },
+        { 
+          mesa_id: mesaId, 
+          sessao_id: sessao.id,
+          total, 
+          observacao, 
+          status: 'novo' 
+        },
         { transaction: t }
       );
 
@@ -51,11 +81,12 @@ class PedidoService {
 
       await this.PedidoItem.bulkCreate(pedidoItens, { transaction: t });
 
+      // Garante que a mesa está marcada como ocupada
       await mesa.update({ status: 'ocupada' }, { transaction: t });
 
       await t.commit();
 
-      logger.info(`Pedido criado: #${pedido.id} — Mesa ${mesa.numero} — R$ ${total}`);
+      logger.info(`Pedido criado: #${pedido.id} — Mesa ${mesa.numero} — Sessão ${sessao.id} — R$ ${total}`);
 
       const pedidoCompleto = await this.Pedido.findByPk(pedido.id, {
         include: [
