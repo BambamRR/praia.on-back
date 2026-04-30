@@ -12,7 +12,6 @@ module.exports = (sequelize) => {
     numero: {
       type:      DataTypes.INTEGER,
       allowNull: false,
-      unique:    true,
       validate:  { min: 1 },
     },
     status: {

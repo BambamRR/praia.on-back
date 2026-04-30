@@ -31,6 +31,10 @@ module.exports = (sequelize) => {
       allowNull: true,
       unique:    true,
     },
+    inicio_contrato: {
+      type:      DataTypes.DATEONLY,
+      allowNull: true,
+    },
     telefone: {
       type:      DataTypes.STRING(20),
       allowNull: true,

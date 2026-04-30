@@ -31,6 +31,11 @@ class MesaService {
     
     return this.Mesa.findAll({ 
       where,
+      include: [{ 
+        model: this.sequelize.models.Estabelecimento, 
+        as: 'estabelecimento', 
+        attributes: ['nome'] 
+      }],
       order: [['numero', 'ASC']] 
     });
   }
@@ -46,6 +51,34 @@ class MesaService {
 
     const mesa = await this.Mesa.create({ numero, capacidade, estabelecimento_id });
     logger.info(`Mesa criada: nº ${numero} - Est: ${estabelecimento_id} (ID: ${mesa.id})`);
+    return mesa;
+  }
+
+  /** Edita uma mesa existente. */
+  async editar(id, { numero, capacidade, estabelecimento_id }) {
+    const mesa = await this.Mesa.findByPk(id);
+    if (!mesa) throw new AppError('Mesa não encontrada', 404);
+
+    // Se estiver mudando o número ou estabelecimento, verifica se já existe
+    if (numero !== undefined || estabelecimento_id !== undefined) {
+      const finalNumero = numero ?? mesa.numero;
+      const finalEstId  = estabelecimento_id ?? mesa.estabelecimento_id;
+      
+      const existente = await this.Mesa.findOne({ 
+        where: { 
+          numero: finalNumero, 
+          estabelecimento_id: finalEstId,
+          id: { [this.sequelize.Sequelize.Op.ne]: id } // Não pode ser ela mesma
+        } 
+      });
+      
+      if (existente) {
+        throw new AppError(`Já existe uma Mesa nº ${finalNumero} neste estabelecimento`, 409);
+      }
+    }
+
+    await mesa.update({ numero, capacidade, estabelecimento_id });
+    logger.info(`Mesa editada: ID ${id}`);
     return mesa;
   }
 

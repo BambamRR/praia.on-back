@@ -55,6 +55,17 @@ class MesaController extends BaseController {
     return formatResponse.success(res, result);
   });
 
+  /** PUT /api/mesas/:id — editar mesa */
+  editar = asyncErrorWrapper(async (req, res) => {
+    const { numero, capacidade, estabelecimento_id } = req.body;
+    const mesa = await getService().editar(req.params.id, { 
+      numero, 
+      capacidade, 
+      estabelecimento_id 
+    });
+    return formatResponse.success(res, mesa);
+  });
+
   /** POST /api/mesas/:mesaId/abrir-sessao */
   abrirSessao = asyncErrorWrapper(async (req, res) => {
     const sessao = await getService().abrirSessao(req.params.mesaId);

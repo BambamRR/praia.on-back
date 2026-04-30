@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 module.exports = {
   async up(queryInterface) {
     const [perfil] = await queryInterface.sequelize.query(
-      `SELECT id FROM perfis WHERE nome = 'administrador' LIMIT 1`,
+      `SELECT id FROM perfis WHERE nome = 'fornecedor' LIMIT 1`,
       { type: queryInterface.sequelize.QueryTypes.SELECT }
     );
 

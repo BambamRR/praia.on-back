@@ -1,37 +1,19 @@
 const { Router } = require('express');
 const ctrl       = require('../controller/EstabelecimentoController');
 const auth       = require('../middlewares/authMiddleware');
+const role       = require('../middlewares/roleMiddleware');
 
 const router = Router();
 
-/**
- * @openapi
- * /estabelecimentos:
- *   get:
- *     tags: [Estabelecimentos]
- *     summary: Lista todos os estabelecimentos (Super Admin)
- *     security: [{ bearerAuth: [] }]
- */
-router.get('/', auth, ctrl.listar);
+router.use(auth);
 
-/**
- * @openapi
- * /estabelecimentos:
- *   post:
- *     tags: [Estabelecimentos]
- *     summary: Cria novo estabelecimento (Super Admin)
- *     security: [{ bearerAuth: [] }]
- */
-router.post('/', auth, ctrl.criar);
+// Listagem e detalhes permitidos para admin e fornecedor
+router.get('/', role(['administrador', 'fornecedor']), ctrl.listar);
+router.get('/:id', role(['administrador', 'fornecedor']), ctrl.detalhes);
 
-/**
- * @openapi
- * /estabelecimentos/{id}:
- *   get:
- *     tags: [Estabelecimentos]
- *     summary: Detalhes do estabelecimento
- *     security: [{ bearerAuth: [] }]
- */
-router.get('/:id', auth, ctrl.detalhes);
+// Criação e edição restritas apenas ao Admin Master
+router.post('/', role('administrador'), ctrl.criar);
+router.put('/:id', role('administrador'), ctrl.editar);
+router.delete('/:id', role('administrador'), ctrl.deletar);
 
 module.exports = router;

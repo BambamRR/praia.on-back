@@ -24,6 +24,7 @@ router.get('/', auth, ctrl.listar);
  *     security: [{ bearerAuth: [] }]
  */
 router.post('/', auth, validate(criarMesaSchema), ctrl.criar);
+router.put('/:id', auth, ctrl.editar);
 
 /**
  * @openapi
