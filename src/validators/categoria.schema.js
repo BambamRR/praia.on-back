@@ -1,11 +1,12 @@
 const Joi = require('joi');
 
 const criarCategoriaSchema = Joi.object({
-  nome:  Joi.string().trim().min(2).max(100).required().messages({
+  nome:               Joi.string().trim().min(2).max(100).required().messages({
     'string.empty': 'Nome é obrigatório',
     'string.min':   'Nome deve ter ao menos 2 caracteres',
   }),
-  ativo: Joi.boolean().default(true),
+  ativo:              Joi.boolean().default(true),
+  estabelecimento_id: Joi.number().integer().positive().allow(null),
 });
 
 const editarCategoriaSchema = Joi.object({
@@ -15,4 +16,10 @@ const editarCategoriaSchema = Joi.object({
   ativo: Joi.boolean(),
 }).min(1);
 
-module.exports = { criarCategoriaSchema, editarCategoriaSchema };
+const duplicarCardapioSchema = Joi.object({
+  from_estabelecimento_id: Joi.number().integer().positive().required(),
+  to_estabelecimento_id:   Joi.number().integer().positive().required(),
+});
+
+module.exports = { criarCategoriaSchema, editarCategoriaSchema, duplicarCardapioSchema };
+

@@ -9,15 +9,16 @@ const categoriaService = new CategoriaService(models);
 class CategoriaController extends BaseController {
 
   /**
-   * GET /api/categorias
+   * GET /api/cardapio/categorias?estabelecimento_id=X
    */
   listar = asyncErrorWrapper(async (req, res) => {
-    const categorias = await categoriaService.listar();
+    const { estabelecimento_id } = req.query;
+    const categorias = await categoriaService.listar(estabelecimento_id ? Number(estabelecimento_id) : null);
     return formatResponse.success(res, { categorias });
   });
 
   /**
-   * POST /api/categorias
+   * POST /api/cardapio/categorias
    */
   criar = asyncErrorWrapper(async (req, res) => {
     const categoria = await categoriaService.criar(req.body);
@@ -25,7 +26,7 @@ class CategoriaController extends BaseController {
   });
 
   /**
-   * PUT /api/categorias/:id
+   * PUT /api/cardapio/categorias/:id
    */
   editar = asyncErrorWrapper(async (req, res) => {
     const categoria = await categoriaService.editar(req.params.id, req.body);
@@ -33,11 +34,21 @@ class CategoriaController extends BaseController {
   });
 
   /**
-   * DELETE /api/categorias/:id
+   * DELETE /api/cardapio/categorias/:id
    */
   remover = asyncErrorWrapper(async (req, res) => {
     const result = await categoriaService.remover(req.params.id);
     return formatResponse.success(res, result);
+  });
+
+  /**
+   * POST /api/cardapio/duplicar
+   * Body: { from_estabelecimento_id, to_estabelecimento_id }
+   */
+  duplicar = asyncErrorWrapper(async (req, res) => {
+    const { from_estabelecimento_id, to_estabelecimento_id } = req.body;
+    const result = await categoriaService.duplicar(Number(from_estabelecimento_id), Number(to_estabelecimento_id));
+    return formatResponse.success(res, result, 201);
   });
 }
 

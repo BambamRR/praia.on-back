@@ -8,6 +8,10 @@ const criarItemSchema = Joi.object({
   }),
   imagem:     Joi.string().uri().allow('', null).default(null),
   disponivel: Joi.boolean().default(true),
+  estabelecimento_id: Joi.number().integer().positive().required().messages({
+    'any.required': '"estabelecimento_id" é obrigatório para cadastrar um produto',
+    'number.base':  '"estabelecimento_id" deve ser um número inteiro válido',
+  }),
 });
 
 const editarItemSchema = Joi.object({

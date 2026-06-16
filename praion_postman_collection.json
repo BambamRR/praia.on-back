@@ -46,7 +46,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@praion.com\",\n  \"senha\": \"Admin@123\"\n}",
+              "raw": "{\n  \"email\": \"@praion.com\admin",\n  \"senha\": \"Admin@123\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] }

@@ -10,9 +10,13 @@ class ItemController extends BaseController {
 
   /**
    * POST /api/categorias/:categoriaId/itens
+   * Admin Local: usa o estabelecimento_id do usuário logado.
+   * Super Admin: usa o estabelecimento_id enviado no body.
    */
   criar = asyncErrorWrapper(async (req, res) => {
-    const item = await itemService.criar(req.params.categoriaId, req.body);
+    // Prioridade: Admin Local → body → erro (validado pelo Joi)
+    const estabelecimento_id = req.user?.estabelecimento_id || req.body.estabelecimento_id;
+    const item = await itemService.criar(req.params.categoriaId, { ...req.body, estabelecimento_id });
     return formatResponse.success(res, item, 201);
   });
 

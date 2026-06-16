@@ -4,19 +4,24 @@ class CardapioService {
     this.Produto   = models.Produto;
   }
 
-  /**
-   * Retorna todas as categorias ativas com seus produtos disponíveis.
-   */
-  async getCardapio() {
+  async getCardapio(estabelecimento_id = null, includeEmpty = false) {
+    const whereProduto  = { disponivel: true };
+    const whereCategoria = { ativo: true };
+
+    if (estabelecimento_id) {
+      whereProduto.estabelecimento_id  = estabelecimento_id;
+      whereCategoria.estabelecimento_id = estabelecimento_id;
+    }
+
     const categorias = await this.Categoria.findAll({
-      where: { ativo: true },
+      where: whereCategoria,
       include: [
         {
           model:    this.Produto,
           as:       'itens',
-          where:    { disponivel: true },
-          required: false,
-          attributes: ['id', 'nome', 'descricao', 'preco', 'imagem', 'disponivel'],
+          where:    whereProduto,
+          required: !includeEmpty, // true = hide empty cats (client); false = show all (admin)
+          attributes: ['id', 'nome', 'descricao', 'preco', 'imagem', 'disponivel', 'estabelecimento_id'],
         },
       ],
       order: [
@@ -30,3 +35,4 @@ class CardapioService {
 }
 
 module.exports = CardapioService;
+

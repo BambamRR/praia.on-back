@@ -48,6 +48,11 @@ module.exports = (sequelize) => {
       allowNull:    false,
       defaultValue: true,
     },
+    slug: {
+      type:      DataTypes.STRING(200),
+      allowNull: true,
+      unique:    true,
+    },
   }, {
     tableName:  'estabelecimentos',
     timestamps: true,
@@ -61,6 +66,10 @@ module.exports = (sequelize) => {
     Estabelecimento.hasMany(models.Mesa, {
       foreignKey: 'estabelecimento_id',
       as:         'mesas',
+    });
+    Estabelecimento.hasMany(models.Produto, {
+      foreignKey: 'estabelecimento_id',
+      as:         'produtos',
     });
   };
 

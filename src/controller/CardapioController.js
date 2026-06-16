@@ -11,7 +11,11 @@ class CardapioController extends BaseController {
    */
   async getCardapio(req, res) {
     try {
-      const data = await this.cardapioService.getCardapio();
+      const { estabelecimento_id, include_empty } = req.query;
+      const data = await this.cardapioService.getCardapio(
+        estabelecimento_id ? Number(estabelecimento_id) : null,
+        include_empty === 'true',
+      );
       return this.handleSuccess(res, data);
     } catch (error) {
       return this.handleError(error, res, 'getCardapio');

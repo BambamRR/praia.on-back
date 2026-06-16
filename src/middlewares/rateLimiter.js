@@ -7,7 +7,7 @@ const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000; /
  */
 const generalLimiter = rateLimit({
   windowMs,
-  max:     parseInt(process.env.RATE_LIMIT_MAX) || 100,
+  max:     process.env.NODE_ENV === 'production' ? (parseInt(process.env.RATE_LIMIT_MAX) || 100) : 999999,
   message: {
     success: false,
     message: 'Muitas requisições. Tente novamente em alguns minutos.',

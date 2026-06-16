@@ -23,6 +23,11 @@ module.exports = (sequelize) => {
       allowNull:    false,
       defaultValue: true,
     },
+    estabelecimento_id: {
+      type:       DataTypes.INTEGER,
+      allowNull:  true,
+      references: { model: 'estabelecimentos', key: 'id' },
+    },
   }, {
     tableName:  'categorias',
     timestamps: true,
@@ -32,6 +37,10 @@ module.exports = (sequelize) => {
     Categoria.hasMany(models.Produto, {
       foreignKey: 'categoria_id',
       as:         'itens',
+    });
+    Categoria.belongsTo(models.Estabelecimento, {
+      foreignKey: 'estabelecimento_id',
+      as:         'estabelecimento',
     });
   };
 

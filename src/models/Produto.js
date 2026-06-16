@@ -40,6 +40,10 @@ module.exports = (sequelize) => {
       type:      DataTypes.INTEGER,
       allowNull: false,
     },
+    estabelecimento_id: {
+      type:      DataTypes.INTEGER,
+      allowNull: false,
+    },
   }, {
     tableName:  'produtos',
     timestamps: true,
@@ -49,6 +53,10 @@ module.exports = (sequelize) => {
     Produto.belongsTo(models.Categoria, {
       foreignKey: 'categoria_id',
       as:         'categoria',
+    });
+    Produto.belongsTo(models.Estabelecimento, {
+      foreignKey: 'estabelecimento_id',
+      as:         'estabelecimento',
     });
   };
 

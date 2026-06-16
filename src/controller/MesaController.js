@@ -61,7 +61,7 @@ class MesaController extends BaseController {
     const mesa = await getService().editar(req.params.id, { 
       numero, 
       capacidade, 
-      estabelecimento_id 
+      estabelecimento_id
     });
     return formatResponse.success(res, mesa);
   });

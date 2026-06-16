@@ -34,7 +34,7 @@ class MesaService {
       include: [{ 
         model: this.sequelize.models.Estabelecimento, 
         as: 'estabelecimento', 
-        attributes: ['nome'] 
+        attributes: ['id', 'nome', 'slug'] 
       }],
       order: [['numero', 'ASC']] 
     });
@@ -68,7 +68,7 @@ class MesaService {
         where: { 
           numero: finalNumero, 
           estabelecimento_id: finalEstId,
-          id: { [this.sequelize.Sequelize.Op.ne]: id } // Não pode ser ela mesma
+          id: { [this.sequelize.Sequelize.Op.ne]: id }
         } 
       });
       

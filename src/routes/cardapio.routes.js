@@ -11,7 +11,7 @@ const CategoriaCtrl      = require('../controller/CategoriaController');
 const ItemCtrl           = require('../controller/ItemController');
 
 /* Validators */
-const { criarCategoriaSchema, editarCategoriaSchema } = require('../validators/categoria.schema');
+const { criarCategoriaSchema, editarCategoriaSchema, duplicarCardapioSchema } = require('../validators/categoria.schema');
 const { criarItemSchema, editarItemSchema, disponibilidadeSchema } = require('../validators/item.schema');
 
 const cardapioService    = new CardapioService(models);
@@ -40,6 +40,9 @@ router.put('/categorias/:id', auth, validate(editarCategoriaSchema), CategoriaCt
 
 /** DELETE /api/cardapio/categorias/:id  (admin) */
 router.delete('/categorias/:id', auth, CategoriaCtrl.remover);
+
+/** POST /api/cardapio/duplicar  (admin) - duplica cardápio entre estabelecimentos */
+router.post('/duplicar', auth, validate(duplicarCardapioSchema), CategoriaCtrl.duplicar);
 
 /* ─────────────────────────────────────────────────────────────────────
  * ITENS  →  /api/cardapio/categorias/:categoriaId/itens
