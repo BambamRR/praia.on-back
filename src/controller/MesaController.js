@@ -15,12 +15,20 @@ class MesaController extends BaseController {
 
   /** GET /api/mesas — lista todas */
   listar = asyncErrorWrapper(async (req, res) => {
-    // Se não for super admin, filtra pelo estabelecimento do usuário
-    const estId = req.user.perfil?.nome === 'administrador' && !req.user.estabelecimento_id 
-      ? null // Super Admin
-      : req.user.estabelecimento_id;
+    const isAdminMaster = req.user.perfil?.nome === 'administrador';
+    let estId = req.user.estabelecimento_id;
+    
+    if (isAdminMaster) {
+        estId = req.query.estabelecimento_id ? Number(req.query.estabelecimento_id) : null;
+    }
 
     const mesas = await getService().listar(estId);
+    return formatResponse.success(res, { mesas });
+  });
+
+  /** GET /api/mesas/publicas — lista mesas para o fluxo público do cliente */
+  listarPublicas = asyncErrorWrapper(async (req, res) => {
+    const mesas = await getService().listar();
     return formatResponse.success(res, { mesas });
   });
 

@@ -21,7 +21,8 @@ class CategoriaController extends BaseController {
    * POST /api/cardapio/categorias
    */
   criar = asyncErrorWrapper(async (req, res) => {
-    const categoria = await categoriaService.criar(req.body);
+    const estabelecimento_id = req.user?.estabelecimento_id || req.body.estabelecimento_id;
+    const categoria = await categoriaService.criar({ ...req.body, estabelecimento_id });
     return formatResponse.success(res, categoria, 201);
   });
 
@@ -29,7 +30,7 @@ class CategoriaController extends BaseController {
    * PUT /api/cardapio/categorias/:id
    */
   editar = asyncErrorWrapper(async (req, res) => {
-    const categoria = await categoriaService.editar(req.params.id, req.body);
+    const categoria = await categoriaService.editar(req.params.id, req.body, req.user?.estabelecimento_id || null);
     return formatResponse.success(res, categoria);
   });
 
@@ -37,7 +38,7 @@ class CategoriaController extends BaseController {
    * DELETE /api/cardapio/categorias/:id
    */
   remover = asyncErrorWrapper(async (req, res) => {
-    const result = await categoriaService.remover(req.params.id);
+    const result = await categoriaService.remover(req.params.id, req.user?.estabelecimento_id || null);
     return formatResponse.success(res, result);
   });
 
@@ -46,6 +47,9 @@ class CategoriaController extends BaseController {
    * Body: { from_estabelecimento_id, to_estabelecimento_id }
    */
   duplicar = asyncErrorWrapper(async (req, res) => {
+    if (req.user?.estabelecimento_id) {
+      return formatResponse.error(res, 'Apenas o administrador master pode duplicar cardápios entre estabelecimentos', 403);
+    }
     const { from_estabelecimento_id, to_estabelecimento_id } = req.body;
     const result = await categoriaService.duplicar(Number(from_estabelecimento_id), Number(to_estabelecimento_id));
     return formatResponse.success(res, result, 201);

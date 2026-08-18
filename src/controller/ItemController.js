@@ -16,7 +16,7 @@ class ItemController extends BaseController {
   criar = asyncErrorWrapper(async (req, res) => {
     // Prioridade: Admin Local → body → erro (validado pelo Joi)
     const estabelecimento_id = req.user?.estabelecimento_id || req.body.estabelecimento_id;
-    const item = await itemService.criar(req.params.categoriaId, { ...req.body, estabelecimento_id });
+    const item = await itemService.criar(req.params.categoriaId, { ...req.body, estabelecimento_id }, req.user?.estabelecimento_id || null);
     return formatResponse.success(res, item, 201);
   });
 
@@ -24,7 +24,7 @@ class ItemController extends BaseController {
    * PUT /api/itens/:id
    */
   editar = asyncErrorWrapper(async (req, res) => {
-    const item = await itemService.editar(req.params.id, req.body);
+    const item = await itemService.editar(req.params.id, req.body, req.user?.estabelecimento_id || null);
     return formatResponse.success(res, item);
   });
 
@@ -32,7 +32,7 @@ class ItemController extends BaseController {
    * DELETE /api/itens/:id
    */
   remover = asyncErrorWrapper(async (req, res) => {
-    const result = await itemService.remover(req.params.id);
+    const result = await itemService.remover(req.params.id, req.user?.estabelecimento_id || null);
     return formatResponse.success(res, result);
   });
 
@@ -41,7 +41,7 @@ class ItemController extends BaseController {
    */
   alterarDisponibilidade = asyncErrorWrapper(async (req, res) => {
     const { disponivel } = req.body;
-    const result = await itemService.alterarDisponibilidade(req.params.id, disponivel);
+    const result = await itemService.alterarDisponibilidade(req.params.id, disponivel, req.user?.estabelecimento_id || null);
     return formatResponse.success(res, result);
   });
 }

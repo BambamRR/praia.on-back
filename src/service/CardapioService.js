@@ -5,8 +5,8 @@ class CardapioService {
   }
 
   async getCardapio(estabelecimento_id = null, includeEmpty = false) {
-    const whereProduto  = { disponivel: true };
-    const whereCategoria = { ativo: true };
+    const whereProduto  = includeEmpty ? {} : { disponivel: true };
+    const whereCategoria = includeEmpty ? {} : { ativo: true };
 
     if (estabelecimento_id) {
       whereProduto.estabelecimento_id  = estabelecimento_id;
@@ -21,7 +21,7 @@ class CardapioService {
           as:       'itens',
           where:    whereProduto,
           required: !includeEmpty, // true = hide empty cats (client); false = show all (admin)
-          attributes: ['id', 'nome', 'descricao', 'preco', 'imagem', 'disponivel', 'estabelecimento_id'],
+          attributes: ['id', 'nome', 'descricao', 'preco', 'imagem', 'disponivel', 'categoria_id', 'estabelecimento_id'],
         },
       ],
       order: [

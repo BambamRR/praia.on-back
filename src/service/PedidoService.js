@@ -37,12 +37,40 @@ class PedidoService {
    * Cria pedido com itens em transaction.
    * Agora vincula o pedido obrigatoriamente a uma SessaoMesa ativa.
    */
-  async criarPedido({ mesaId, itens, total, observacao }, io = null) {
+  async criarPedido({ mesaId, itens, observacao }, io = null) {
     const mesa = await this.Mesa.findByPk(mesaId);
     if (!mesa) throw new AppError('Mesa não encontrada', 404);
 
     const t = await this.sequelize.transaction();
     try {
+      const produtoIds = [...new Set(itens.map((item) => item.id))];
+      const whereProduto = { id: produtoIds, disponivel: true };
+      if (mesa.estabelecimento_id) whereProduto.estabelecimento_id = mesa.estabelecimento_id;
+
+      const produtos = await this.Produto.findAll({ where: whereProduto, transaction: t });
+      if (produtos.length !== produtoIds.length) {
+        throw new AppError('Um ou mais itens não estão disponíveis para esta mesa', 400);
+      }
+
+      const produtosMap = new Map(produtos.map((produto) => [produto.id, produto]));
+
+      const pedidoItens = itens.map((item) => {
+        const produto = produtosMap.get(item.id);
+        const preco = parseFloat(produto.preco);
+        const subtotal = parseFloat((item.quantidade * preco).toFixed(2));
+
+        return {
+          produto_id:     produto.id,
+          nome:           produto.nome,
+          quantidade:     item.quantidade,
+          preco_unitario: preco,
+          subtotal,
+          observacao:     item.observacao || null,
+        };
+      });
+
+      const total = parseFloat(pedidoItens.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2));
+
       // 1. Buscar ou Criar Sessão Ativa
       let sessao = await this.SessaoMesa.findOne({
         where: { mesa_id: mesaId, status: 'aberta' },
@@ -69,17 +97,10 @@ class PedidoService {
         { transaction: t }
       );
 
-      const pedidoItens = itens.map((item) => ({
-        pedido_id:      pedido.id,
-        produto_id:     item.id,
-        nome:           item.nome,
-        quantidade:     item.quantidade,
-        preco_unitario: item.preco,
-        subtotal:       parseFloat((item.quantidade * item.preco).toFixed(2)),
-        observacao:     item.observacao || null,
-      }));
-
-      await this.PedidoItem.bulkCreate(pedidoItens, { transaction: t });
+      await this.PedidoItem.bulkCreate(
+        pedidoItens.map((item) => ({ ...item, pedido_id: pedido.id })),
+        { transaction: t }
+      );
 
       // Garante que a mesa está marcada como ocupada
       await mesa.update({ status: 'ocupada' }, { transaction: t });

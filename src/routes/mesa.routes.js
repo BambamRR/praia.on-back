@@ -17,6 +17,15 @@ router.get('/', auth, ctrl.listar);
 
 /**
  * @openapi
+ * /mesas/publicas:
+ *   get:
+ *     tags: [Mesas]
+ *     summary: Lista mesas para acesso público do cliente via cardápio/QR Code
+ */
+router.get('/publicas', ctrl.listarPublicas);
+
+/**
+ * @openapi
  * /mesas:
  *   post:
  *     tags: [Mesas]
@@ -52,10 +61,9 @@ router.post('/:mesaId/abrir-sessao', ctrl.abrirSessao);
  * /mesas/{mesaId}/pedidos:
  *   get:
  *     tags: [Mesas]
- *     summary: Lista pedidos de uma mesa (admin)
- *     security: [{ bearerAuth: [] }]
+ *     summary: Lista pedidos da sessão ativa de uma mesa (cliente)
  */
-router.get('/:mesaId/pedidos', auth, ctrl.getPedidosByMesa);
+router.get('/:mesaId/pedidos', ctrl.getPedidosByMesa);
 
 /**
  * @openapi

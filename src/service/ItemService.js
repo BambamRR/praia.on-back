@@ -11,13 +11,23 @@ class ItemService {
   }
 
   /** Cria item vinculado a uma categoria. */
-  async criar(categoriaId, dados) {
+  async criar(categoriaId, dados, estabelecimento_id = null) {
     const categoria = await this.Categoria.findByPk(categoriaId);
     if (!categoria) throw new AppError('Categoria não encontrada', 404);
+    if (estabelecimento_id && categoria.estabelecimento_id !== estabelecimento_id) {
+      throw new AppError('Categoria não pertence ao seu estabelecimento', 403);
+    }
+
+    const finalEstabelecimentoId = estabelecimento_id || dados.estabelecimento_id || categoria.estabelecimento_id;
+    if (!finalEstabelecimentoId) throw new AppError('O estabelecimento é obrigatório para criar um item', 400);
+    if (categoria.estabelecimento_id !== finalEstabelecimentoId) {
+      throw new AppError('O item deve pertencer ao mesmo estabelecimento da categoria', 400);
+    }
 
     const item = await this.Produto.create({
       ...dados,
       categoria_id: categoriaId,
+      estabelecimento_id: finalEstabelecimentoId,
     });
 
     logger.info(`Item criado: "${item.nome}" (ID: ${item.id}) — Categoria: ${categoria.nome}`);
@@ -25,13 +35,19 @@ class ItemService {
   }
 
   /** Edita campos parciais de um item. */
-  async editar(id, dados) {
+  async editar(id, dados, estabelecimento_id = null) {
     const item = await this.Produto.findByPk(id);
     if (!item) throw new AppError('Item não encontrado', 404);
+    if (estabelecimento_id && item.estabelecimento_id !== estabelecimento_id) {
+      throw new AppError('Item não pertence ao seu estabelecimento', 403);
+    }
 
     if (dados.categoria_id) {
       const cat = await this.Categoria.findByPk(dados.categoria_id);
       if (!cat) throw new AppError('Categoria destino não encontrada', 404);
+      if (cat.estabelecimento_id !== item.estabelecimento_id) {
+        throw new AppError('Categoria destino deve pertencer ao mesmo estabelecimento do item', 400);
+      }
     }
 
     await item.update(dados);
@@ -40,9 +56,12 @@ class ItemService {
   }
 
   /** Remove um item. */
-  async remover(id) {
+  async remover(id, estabelecimento_id = null) {
     const item = await this.Produto.findByPk(id);
     if (!item) throw new AppError('Item não encontrado', 404);
+    if (estabelecimento_id && item.estabelecimento_id !== estabelecimento_id) {
+      throw new AppError('Item não pertence ao seu estabelecimento', 403);
+    }
 
     await item.destroy();
     logger.info(`Item removido: ID ${id}`);
@@ -53,9 +72,12 @@ class ItemService {
    * Liga/desliga disponibilidade de forma rápida.
    * Usado pelo admin no painel para ativar/desativar um item sem precisar editar tudo.
    */
-  async alterarDisponibilidade(id, disponivel) {
+  async alterarDisponibilidade(id, disponivel, estabelecimento_id = null) {
     const item = await this.Produto.findByPk(id);
     if (!item) throw new AppError('Item não encontrado', 404);
+    if (estabelecimento_id && item.estabelecimento_id !== estabelecimento_id) {
+      throw new AppError('Item não pertence ao seu estabelecimento', 403);
+    }
 
     await item.update({ disponivel });
     logger.info(`Item #${id} — disponível: ${disponivel}`);

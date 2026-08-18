@@ -1,4 +1,5 @@
 const BaseController = require('./BaseController');
+const { getIO } = require('../config/socket');
 
 class PedidoController extends BaseController {
   constructor(pedidoService) {
@@ -11,7 +12,13 @@ class PedidoController extends BaseController {
    */
   async listarPedidos(req, res) {
     try {
-      const estId = req.user.estabelecimento_id;
+      const isAdminMaster = req.user.perfil.nome === 'administrador';
+      let estId = req.user.estabelecimento_id;
+      
+      if (isAdminMaster) {
+          estId = req.query.estabelecimento_id ? Number(req.query.estabelecimento_id) : null;
+      }
+      
       const pedidos = await this.pedidoService.listarPedidos(estId);
       return this.handleSuccess(res, { pedidos });
     } catch (error) {
@@ -24,7 +31,10 @@ class PedidoController extends BaseController {
    */
   async criarPedido(req, res) {
     try {
-      const pedido = await this.pedidoService.criarPedido(req.body);
+      let io = null;
+      try { io = getIO(); } catch (_) { /* Socket não inicializado em testes */ }
+
+      const pedido = await this.pedidoService.criarPedido(req.body, io);
       return this.handleSuccess(res, pedido, 'Pedido criado com sucesso', 201);
     } catch (error) {
       return this.handleError(error, res, 'criarPedido');

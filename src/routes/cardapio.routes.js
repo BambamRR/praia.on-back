@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const asyncErrorWrapper  = require('../utils/asyncErrorWrapper');
 const auth               = require('../middlewares/authMiddleware');
+const optionalAuth       = require('../middlewares/optionalAuth');
 const validate           = require('../middlewares/validate');
 const models             = require('../models');
 
@@ -23,7 +24,7 @@ const router = Router();
  * GET /api/cardapio
  * Lista pública do cardápio (categorias + itens disponíveis)
  * ───────────────────────────────────────────────────────────────────── */
-router.get('/', asyncErrorWrapper((req, res) => cardapioController.getCardapio(req, res)));
+router.get('/', optionalAuth, asyncErrorWrapper((req, res) => cardapioController.getCardapio(req, res)));
 
 /* ─────────────────────────────────────────────────────────────────────
  * CATEGORIAS  →  /api/cardapio/categorias
