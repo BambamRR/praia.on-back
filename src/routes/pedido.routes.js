@@ -28,6 +28,12 @@ router.get(
   asyncErrorWrapper((req, res) => pedidoController.listarPedidos(req, res))
 );
 
+router.get(
+  '/historico',
+  authMiddleware,
+  asyncErrorWrapper((req, res) => pedidoController.listarHistorico(req, res))
+);
+
 /**
  * @swagger
  * /api/pedidos:

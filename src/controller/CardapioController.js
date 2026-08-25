@@ -17,16 +17,23 @@ class CardapioController extends BaseController {
       const hasEstabelecimentoId = rawEstabelecimentoId !== undefined;
       const estabelecimento_id = hasEstabelecimentoId ? Number(rawEstabelecimentoId) : null;
       const isAdmin = req.user?.perfil?.nome === 'administrador';
+      const isAdminMaster = isAdmin && !req.user.estabelecimento_id;
 
       if (hasEstabelecimentoId && (!Number.isInteger(estabelecimento_id) || estabelecimento_id <= 0)) {
         throw new AppError('estabelecimento_id deve ser um número inteiro positivo', 400);
       }
 
-      if (includeEmpty && !isAdmin) {
+      // include_empty (itens indisponíveis + categorias vazias) exige que o
+      // solicitante gerencie o estabelecimento consultado: admin master (todos)
+      // ou o parceiro dono do próprio estabelecimento.
+      const gerenciaEstabelecimento =
+        isAdminMaster ||
+        (!!req.user?.estabelecimento_id && estabelecimento_id === req.user.estabelecimento_id);
+
+      if (includeEmpty && !gerenciaEstabelecimento) {
         throw new AppError('A listagem de itens indisponíveis exige autenticação administrativa', 403);
       }
 
-      const isAdminMaster = isAdmin && !req.user.estabelecimento_id;
       if (!estabelecimento_id && (!includeEmpty || !isAdminMaster)) {
         throw new AppError('estabelecimento_id é obrigatório para consultar o cardápio', 400);
       }

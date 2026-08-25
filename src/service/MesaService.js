@@ -25,17 +25,26 @@ class MesaService {
    * Lista todas as mesas com status atual. 
    * Se estabelecimento_id for informado, filtra por ele.
    */
-  async listar(estabelecimento_id = null) {
+  async listar(estabelecimento_id = null, includeSessoes = true) {
     const where = {};
     if (estabelecimento_id) where.estabelecimento_id = estabelecimento_id;
-    
-    return this.Mesa.findAll({ 
+
+    const include = [{
+      model: this.sequelize.models.Estabelecimento,
+      as: 'estabelecimento',
+      attributes: ['id', 'nome', 'slug'],
+    }];
+    if (includeSessoes) include.push({
+      model: this.SessaoMesa,
+      as: 'sessoes',
+      where: { status: ['aberta', 'aguardando_fechamento'] },
+      required: false,
+      attributes: ['id', 'status', 'aberto_em', 'total', 'metodo_pagamento'],
+    });
+
+    return this.Mesa.findAll({
       where,
-      include: [{ 
-        model: this.sequelize.models.Estabelecimento, 
-        as: 'estabelecimento', 
-        attributes: ['id', 'nome', 'slug'] 
-      }],
+      include,
       order: [['numero', 'ASC']] 
     });
   }
@@ -105,17 +114,30 @@ class MesaService {
 
   /** Abre uma nova sessão para a mesa (quando o cliente senta/faz primeiro pedido) */
   async abrirSessao(mesaId) {
-    const mesa = await this.Mesa.findByPk(mesaId);
-    if (!mesa) throw new AppError('Mesa não encontrada', 404);
-
-    // Se já houver uma sessão aberta, retorna ela
-    const sessaoExistente = await this.SessaoMesa.findOne({
-      where: { mesa_id: mesaId, status: 'aberta' }
-    });
-    if (sessaoExistente) return sessaoExistente;
-
     const t = await this.sequelize.transaction();
     try {
+      const mesa = await this.Mesa.findByPk(mesaId, { transaction: t, lock: t.LOCK.UPDATE });
+      if (!mesa) throw new AppError('Mesa não encontrada', 404);
+
+      const sessaoExistente = await this.SessaoMesa.findOne({
+        where: { mesa_id: mesaId, status: 'aberta' },
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      });
+      if (sessaoExistente) {
+        await t.commit();
+        return sessaoExistente;
+      }
+
+      const sessaoAguardando = await this.SessaoMesa.findOne({
+        where: { mesa_id: mesaId, status: 'aguardando_fechamento' },
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      });
+      if (sessaoAguardando) {
+        throw new AppError('A mesa está aguardando o fechamento da conta', 409);
+      }
+
       const sessao = await this.SessaoMesa.create({
         mesa_id: mesaId,
         status: 'aberta',
@@ -133,9 +155,12 @@ class MesaService {
   }
 
   /** Retorna a sessão ativa de uma mesa */
-  async getSessaoAtiva(mesaId) {
+  async getSessaoAtiva(mesaId, sessionToken = null) {
+    const where = { mesa_id: mesaId, status: ['aberta', 'aguardando_fechamento'] };
+    if (sessionToken) where.session_token = sessionToken;
+
     return this.SessaoMesa.findOne({
-      where: { mesa_id: mesaId, status: ['aberta', 'aguardando_fechamento'] }
+      where,
     });
   }
 
@@ -164,8 +189,10 @@ class MesaService {
   }
 
   /** Retorna pedidos de uma mesa (apenas da sessão ativa). */
-  async getPedidosByMesa(mesaId) {
-    const sessao = await this.getSessaoAtiva(mesaId);
+  async getPedidosByMesa(mesaId, sessionToken) {
+    if (!sessionToken) throw new AppError('session_token é obrigatório', 400);
+
+    const sessao = await this.getSessaoAtiva(mesaId, sessionToken);
     if (!sessao) return [];
 
     const pedidos = await this.Pedido.findAll({
@@ -231,13 +258,37 @@ class MesaService {
 
   /**
    * Finaliza oficialmente a conta da mesa e encerra a sessão.
+   * @param {number}  mesaId
+   * @param {string}  [metodoPagamento=null]
+   * @param {number}  [desconto=0]      - Valor do desconto em R$ (aplicado sobre o totalBruto)
+   * @param {boolean} [cobrarTaxa=true] - Se false, a taxa de serviço (10%) NÃO é cobrada
    */
-  async finalizarConta(mesaId, metodoPagamento = null) {
+  async finalizarConta(mesaId, metodoPagamento = null, desconto = 0, cobrarTaxa = true) {
     const mesa = await this.Mesa.findByPk(mesaId);
     if (!mesa) throw new AppError('Mesa não encontrada', 404);
 
     const sessao = await this.getSessaoAtiva(mesaId);
     if (!sessao) throw new AppError('Não há sessão ativa para esta mesa', 400);
+
+    const pedidos = await this.Pedido.findAll({
+      where: { sessao_id: sessao.id, status: ['novo', 'preparando', 'pronto', 'entregue'] },
+      attributes: ['total'],
+    });
+    const subtotal = pedidos.reduce((total, pedido) => total + parseFloat(pedido.total), 0);
+
+    // Quando a flag cobrarTaxa vem explícita, recalcula o total a partir do
+    // subtotal (o valor gravado pelo fecharConta pode já conter a taxa).
+    // Sem a flag (chamadas antigas), mantém o total da sessão por compatibilidade.
+    let totalBruto;
+    if (typeof cobrarTaxa === 'boolean') {
+      totalBruto = cobrarTaxa
+        ? parseFloat((subtotal * (1 + TAXA_SERVICO)).toFixed(2))
+        : parseFloat(subtotal.toFixed(2));
+    } else {
+      totalBruto = parseFloat(sessao.total) || parseFloat((subtotal * (1 + TAXA_SERVICO)).toFixed(2));
+    }
+    const descontoValor = Math.max(0, Math.min(parseFloat(desconto) || 0, totalBruto)); // não negativo e não excede o total
+    const totalFinal = parseFloat((totalBruto - descontoValor).toFixed(2));
 
     const t = await this.sequelize.transaction();
     try {
@@ -250,12 +301,20 @@ class MesaService {
         }
       );
 
-      // 2. Fecha a sessão
+      // 2. Fecha a sessão — armazena o total final (após desconto) e o valor do desconto
       await sessao.update({ 
         status: 'fechada', 
         fechado_em: new Date(),
+        total: totalFinal,
+        desconto: descontoValor,
         metodo_pagamento: metodoPagamento 
       }, { transaction: t });
+
+      // Garante que nenhuma sessão ativa permaneça associada à mesa.
+      await this.SessaoMesa.update(
+        { status: 'fechada', fechado_em: new Date(), metodo_pagamento: metodoPagamento },
+        { where: { mesa_id: mesaId, status: ['aberta', 'aguardando_fechamento'] }, transaction: t },
+      );
 
       // 3. Libera a mesa
       await mesa.update({ status: 'livre' }, { transaction: t });
@@ -263,7 +322,7 @@ class MesaService {
       await t.commit();
       logger.info(`✅ Sessão ${sessao.id} encerrada e mesa ${mesa.numero} liberada.`);
 
-      return { success: true, message: 'Conta finalizada e mesa liberada com sucesso' };
+      return { success: true, message: 'Conta finalizada e mesa liberada com sucesso', total: totalFinal, desconto: descontoValor };
     } catch (err) {
       await t.rollback();
       throw err;

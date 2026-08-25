@@ -28,7 +28,7 @@ class MesaController extends BaseController {
 
   /** GET /api/mesas/publicas — lista mesas para o fluxo público do cliente */
   listarPublicas = asyncErrorWrapper(async (req, res) => {
-    const mesas = await getService().listar();
+    const mesas = await getService().listar(null, false);
     return formatResponse.success(res, { mesas });
   });
 
@@ -90,7 +90,7 @@ class MesaController extends BaseController {
 
   /** GET /api/mesas/:mesaId/pedidos */
   getPedidosByMesa = asyncErrorWrapper(async (req, res) => {
-    const pedidos = await getService().getPedidosByMesa(req.params.mesaId);
+    const pedidos = await getService().getPedidosByMesa(req.params.mesaId, req.query.session_token);
     return formatResponse.success(res, { pedidos });
   });
 
@@ -104,8 +104,15 @@ class MesaController extends BaseController {
 
   /** POST /api/mesas/:mesaId/finalizar-conta — liberar mesa (admin) */
   finalizarConta = asyncErrorWrapper(async (req, res) => {
-    const { metodoPagamento } = req.body;
-    const result = await getService().finalizarConta(req.params.mesaId, metodoPagamento);
+    const { metodoPagamento, desconto, cobrarTaxa } = req.body;
+    const result = await getService().finalizarConta(req.params.mesaId, metodoPagamento, desconto, cobrarTaxa);
+    try {
+      getIO().emit('mesa_status_atualizado', {
+        mesaId: Number(req.params.mesaId),
+        status: 'livre',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (_) { /* Socket opcional */ }
     return formatResponse.success(res, result);
   });
 }

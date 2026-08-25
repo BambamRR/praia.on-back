@@ -40,6 +40,14 @@ module.exports = (sequelize) => {
         return val ? parseFloat(val) : 0;
       },
     },
+    desconto: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0,
+      get() {
+        const val = this.getDataValue('desconto');
+        return val ? parseFloat(val) : 0;
+      },
+    },
     metodo_pagamento: {
       type:      DataTypes.STRING(50),
       allowNull: true,

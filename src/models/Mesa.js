@@ -43,6 +43,10 @@ module.exports = (sequelize) => {
       foreignKey: 'mesa_id',
       as:         'pedidos',
     });
+    Mesa.hasMany(models.SessaoMesa, {
+      foreignKey: 'mesa_id',
+      as:         'sessoes',
+    });
     Mesa.belongsTo(models.Estabelecimento, {
       foreignKey: 'estabelecimento_id',
       as:         'estabelecimento',

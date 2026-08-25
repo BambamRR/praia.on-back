@@ -12,17 +12,42 @@ class PedidoController extends BaseController {
    */
   async listarPedidos(req, res) {
     try {
-      const isAdminMaster = req.user.perfil.nome === 'administrador';
+      const isAdminMaster = req.user.perfil.nome === 'administrador' && !req.user.estabelecimento_id;
       let estId = req.user.estabelecimento_id;
       
       if (isAdminMaster) {
           estId = req.query.estabelecimento_id ? Number(req.query.estabelecimento_id) : null;
       }
       
-      const pedidos = await this.pedidoService.listarPedidos(estId);
+      const pedidos = await this.pedidoService.listarPedidos(estId, {
+        mesa: req.query.mesa || req.query.mesaId,
+        data: req.query.data,
+        dataInicio: req.query.dataInicio,
+        dataFim: req.query.dataFim,
+      });
       return this.handleSuccess(res, { pedidos });
     } catch (error) {
       return this.handleError(error, res, 'listarPedidos');
+    }
+  }
+
+  async listarHistorico(req, res) {
+    try {
+      const isAdminMaster = req.user.perfil.nome === 'administrador' && !req.user.estabelecimento_id;
+      const estId = isAdminMaster
+        ? (req.query.estabelecimentoId || req.query.estabelecimento_id ? Number(req.query.estabelecimentoId || req.query.estabelecimento_id) : null)
+        : req.user.estabelecimento_id;
+      const resultado = await this.pedidoService.listarHistorico(estId, {
+        data: req.query.data,
+        dataInicio: req.query.dataInicio,
+        dataFim: req.query.dataFim,
+        mesa: req.query.mesa || req.query.mesaId,
+        page: req.query.page,
+        limit: req.query.limit,
+      });
+      return this.handleSuccess(res, resultado);
+    } catch (error) {
+      return this.handleError(error, res, 'listarHistorico');
     }
   }
 
@@ -50,6 +75,7 @@ class PedidoController extends BaseController {
         req.params.pedidoId,
         req.body.status
       );
+      try { getIO().emit('pedido_status_atualizado', { pedido, timestamp: new Date().toISOString() }); } catch (_) { /* Socket opcional */ }
       return this.handleSuccess(res, pedido, 'Status atualizado com sucesso');
     } catch (error) {
       return this.handleError(error, res, 'atualizarStatus');
