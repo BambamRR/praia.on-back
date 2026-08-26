@@ -8,8 +8,14 @@ class UserService {
     this.Estabelecimento = models.Estabelecimento;
   }
 
-  async listUsers() {
+  async listUsers(estabelecimento_id = null) {
+    const where = {};
+    // Filtro de multitenancy: se um estabelecimento for informado, retorna
+    // apenas os usuários daquele estabelecimento.
+    if (estabelecimento_id) where.estabelecimento_id = estabelecimento_id;
+
     return await this.User.findAll({
+      where,
       include: [
         { model: this.Perfil, as: 'perfil' },
         { model: this.Estabelecimento, as: 'estabelecimento' }

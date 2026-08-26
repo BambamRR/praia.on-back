@@ -10,12 +10,17 @@ const router = Router();
 const userService = new UserService(models);
 const userController = new UserController(userService);
 
-// Todas as rotas de usuários exigem autenticação e perfil de administrador
+// Todas as rotas de usuários exigem autenticação.
 router.use(authMiddleware);
-router.use(roleMiddleware('administrador'));
 
-router.get('/', asyncErrorWrapper((req, res) => userController.index(req, res)));
-router.get('/perfis', asyncErrorWrapper((req, res) => userController.perfis(req, res)));
+// Listagem (GET / e /perfis) liberada para admin e fornecedor —
+// o controller filtra por estabelecimento para usuários não-master,
+// então o fornecedor vê apenas os usuários do próprio estabelecimento.
+router.get('/', roleMiddleware(['administrador', 'fornecedor']), asyncErrorWrapper((req, res) => userController.index(req, res)));
+router.get('/perfis', roleMiddleware(['administrador', 'fornecedor']), asyncErrorWrapper((req, res) => userController.perfis(req, res)));
+
+// Escrita (criar/editar/remover) restrita apenas ao perfil administrador.
+router.use(roleMiddleware('administrador'));
 router.post('/', asyncErrorWrapper((req, res) => userController.store(req, res)));
 router.put('/:id', asyncErrorWrapper((req, res) => userController.update(req, res)));
 router.delete('/:id', asyncErrorWrapper((req, res) => userController.destroy(req, res)));

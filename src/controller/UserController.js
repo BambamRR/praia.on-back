@@ -4,7 +4,11 @@ class UserController {
   }
 
   async index(req, res) {
-    const users = await this.userService.listUsers();
+    // Multitenancy: admin master vê todos; admin local e fornecedor veem
+    // apenas os usuários do próprio estabelecimento.
+    const isMaster = req.user?.perfil?.nome === 'administrador' && !req.user?.estabelecimento_id;
+    const estabelecimento_id = isMaster ? null : req.user?.estabelecimento_id || null;
+    const users = await this.userService.listUsers(estabelecimento_id);
     return res.json({ success: true, data: users });
   }
 
