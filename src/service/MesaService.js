@@ -64,9 +64,20 @@ class MesaService {
   }
 
   /** Edita uma mesa existente. */
-  async editar(id, { numero, capacidade, estabelecimento_id }) {
+  async editar(id, { numero, capacidade, estabelecimento_id }, escopoEstabelecimentoId = null) {
     const mesa = await this.Mesa.findByPk(id);
     if (!mesa) throw new AppError('Mesa não encontrada', 404);
+
+    // Multi-tenancy: usuário vinculado a um estabelecimento (parceiro) só pode
+    // editar mesas do PRÓPRIO estabelecimento e não pode movê-las para outro.
+    if (escopoEstabelecimentoId) {
+      if (mesa.estabelecimento_id !== Number(escopoEstabelecimentoId)) {
+        throw new AppError('Acesso não autorizado a esta mesa', 403);
+      }
+      if (estabelecimento_id && Number(estabelecimento_id) !== Number(escopoEstabelecimentoId)) {
+        throw new AppError('Não é possível mover a mesa para outro estabelecimento', 403);
+      }
+    }
 
     // Se estiver mudando o número ou estabelecimento, verifica se já existe
     if (numero !== undefined || estabelecimento_id !== undefined) {
@@ -91,7 +102,7 @@ class MesaService {
     return mesa;
   }
 
-  /** Remove uma mesa — apenas se estiver livre. */
+  /** Remove uma mesa — apenas se estiver livre e sem histórico/sessão. */
   async remover(id, estabelecimento_id = null) {
     const where = { id };
     if (estabelecimento_id) where.estabelecimento_id = estabelecimento_id;
@@ -101,6 +112,23 @@ class MesaService {
 
     if (mesa.status === 'ocupada') {
       throw new AppError('Não é possível remover uma mesa ocupada', 409);
+    }
+    if (mesa.status === 'aguardando') {
+      throw new AppError('Não é possível remover uma mesa aguardando atendimento', 409);
+    }
+
+    // Mesa com sessão ativa não pode ser removida
+    const sessaoAtiva = await this.SessaoMesa.count({
+      where: { mesa_id: id, status: ['aberta', 'aguardando_fechamento'] },
+    });
+    if (sessaoAtiva > 0) {
+      throw new AppError('Não é possível remover uma mesa com sessão em andamento', 409);
+    }
+
+    // Mesa com histórico de pedidos não pode ser removida (FK RESTRICT no banco)
+    const qtdePedidos = await this.Pedido.count({ where: { mesa_id: id } });
+    if (qtdePedidos > 0) {
+      throw new AppError('Não é possível remover uma mesa com histórico de pedidos', 409);
     }
 
     await mesa.destroy();

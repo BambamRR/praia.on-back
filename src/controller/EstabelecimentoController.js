@@ -38,6 +38,15 @@ class EstabelecimentoController extends BaseController {
 
   /** POST /api/estabelecimentos — criar novo (Super Admin) */
   criar = asyncErrorWrapper(async (req, res) => {
+    const { slug } = req.body;
+    // Garante unicidade do slug (usado no QR Code/URLs públicas) mesmo sem
+    // constraint única no banco.
+    if (slug) {
+      const existente = await models.Estabelecimento.findOne({ where: { slug } });
+      if (existente) {
+        return formatResponse.error(res, 'Este slug já está em uso por outro estabelecimento', 409);
+      }
+    }
     const estabelecimento = await models.Estabelecimento.create(req.body);
     return formatResponse.success(res, estabelecimento, 201);
   });

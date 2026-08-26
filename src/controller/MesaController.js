@@ -15,7 +15,7 @@ class MesaController extends BaseController {
 
   /** GET /api/mesas — lista todas */
   listar = asyncErrorWrapper(async (req, res) => {
-    const isAdminMaster = req.user.perfil?.nome === 'administrador';
+    const isAdminMaster = req.user.perfil?.nome === 'administrador' && !req.user.estabelecimento_id;
     let estId = req.user.estabelecimento_id;
     
     if (isAdminMaster) {
@@ -66,11 +66,13 @@ class MesaController extends BaseController {
   /** PUT /api/mesas/:id — editar mesa */
   editar = asyncErrorWrapper(async (req, res) => {
     const { numero, capacidade, estabelecimento_id } = req.body;
+    const isAdminMaster = req.user.perfil?.nome === 'administrador' && !req.user.estabelecimento_id;
+    const escopo = isAdminMaster ? null : req.user.estabelecimento_id;
     const mesa = await getService().editar(req.params.id, { 
       numero, 
       capacidade, 
       estabelecimento_id
-    });
+    }, escopo);
     return formatResponse.success(res, mesa);
   });
 
